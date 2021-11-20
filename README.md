@@ -1,1 +1,1 @@
-two-host-line-coding
+Two hosts line coding with MLT-3 algorithm.
