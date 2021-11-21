@@ -1,4 +1,5 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
+from encode import encrypt, binary_encode, mlt3_line_encode
 
 
 class graphicInterfaceService(object):
@@ -73,11 +74,19 @@ class graphicInterfaceService(object):
         self.botaoEnvio.clicked.connect(self.button_clicked)
 
     def button_clicked(self):
-        print(self.tabelaValores.item(0, 0).text())
+        msg = self.tabelaValores.item(0, 0).text()
+        encrypted = encrypt(msg)
+        binary = binary_encode(encrypted)
+        signal = mlt3_line_encode(binary)
+
+        bin_str = ''.join([str(bit) for bit in binary])
+        signal_str = ','.join([str(bit) for bit in signal])
+
+        self.set_binary_msg(bin_str)
+        self.set_algorithm_msg(signal_str)
 
     def set_binary_msg(self, value):
         self.tabelaValores.setItem(1, 0, QtWidgets.QTableWidgetItem(value))
 
     def set_algorithm_msg(self, value):
         self.tabelaValores.setItem(2, 0, QtWidgets.QTableWidgetItem(value))
-

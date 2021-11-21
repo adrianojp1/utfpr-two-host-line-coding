@@ -1,8 +1,10 @@
-﻿# This Python file uses the following encoding: utf-8
+﻿#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
 from PyQt5 import QtWidgets
-from PySide2.QtWidgets import QApplication
 from graphicInterfaceService import graphicInterfaceService
+
 
 if __name__ == "__main__":
     import sys
