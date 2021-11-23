@@ -1,4 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
+import pyqtgraph as pg
+import array
 from encode import encrypt, binary_encode, mlt3_line_encode
 
 
@@ -30,7 +32,8 @@ class graphicInterfaceService(object):
         self.label_2.setGeometry(QtCore.QRect(360, 50, 91, 31))
         self.label_2.setTextFormat(QtCore.Qt.MarkdownText)
         self.label_2.setObjectName("label_2")
-        self.grafico = QtWidgets.QGraphicsView(self.centralwidget)
+        #grafico = QtWidgets.QGraphicsView(self.centralwidget)
+        self.grafico = pg.PlotWidget(self.centralwidget)
         self.grafico.setGeometry(QtCore.QRect(40, 270, 711, 241))
         self.grafico.setObjectName("grafico")
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
@@ -84,6 +87,9 @@ class graphicInterfaceService(object):
 
         self.set_binary_msg(bin_str)
         self.set_algorithm_msg(signal_str)
+        a = list(range(len(signal)))
+        self.grafico.plot(a, signal, pen=None, symbol='o')
+
 
     def set_binary_msg(self, value):
         self.tabelaValores.setItem(1, 0, QtWidgets.QTableWidgetItem(value))
