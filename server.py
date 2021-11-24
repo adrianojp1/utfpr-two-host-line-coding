@@ -1,18 +1,21 @@
 import socket
-import struct
+import threading
 
-HOST = '' #colocar o host (e.g., localhost)
-PORT = '' #colocar o port
+HOST = socket.gethostbyname(socket.gethostname()) #colocar o host 
+PORT = 8080 #colocar um port acima de 1000
+
+print(HOST)
 
 svr = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+svr.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 svr.bind((HOST, PORT))
+
+
 svr.listen(5)
 
-while True:
-	c, addr = svr.accept() 
-	#caso precise do tamanho da mensagem
-	#svr.send(struct.pack('i', len(msg))) 
-	svr.send("Mensagem codificada") 
+con, adr = svr.accept()  
+msg = con.recv(1024)
+print(msg.decode('utf-8'))
 
-c.close()
+con.close()
 
