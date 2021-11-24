@@ -6,7 +6,7 @@ import pyqtgraph as pg
 from encode import binary_decode, decrypt, encrypt, binary_encode, mlt3_line_decode, mlt3_line_encode
 
 #HOST = socket.gethostbyname(socket.gethostname()) #colocar o host 
-HOST = "localhost"
+HOST = "25.0.9.210"
 PORT = 3000 #colocar um port acima de 1000
 
 class graphicInterfaceService(object):

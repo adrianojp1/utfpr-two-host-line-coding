@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 import pyqtgraph as pg
 from encode import encrypt, binary_encode, mlt3_line_encode
 
-HOST = "localhost"  #colocar o host (e.g., localhost)
+HOST = "25.0.9.210"  #colocar o host (e.g., localhost)
 PORT = 3000  #colocar o port
 
 class graphicInterfaceService(object):
@@ -91,6 +91,7 @@ class graphicInterfaceService(object):
         self.set_binary_msg(bin_str)
         self.set_algorithm_msg(signal_str)
         a = list(range(len(signal)))
+        self.grafico.clear()
         self.grafico.plot(a, signal, pen=None, symbol='o')
 
         cnt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
