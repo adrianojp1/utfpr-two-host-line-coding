@@ -2,9 +2,10 @@ import socket
 import sys
 from PyQt5 import QtCore, QtWidgets
 import pyqtgraph as pg
-from encode import encrypt, binary_encode, mlt3_line_encode
+from encode import binary_decode, decrypt, encrypt, binary_encode, mlt3_line_decode, mlt3_line_encode
 
-HOST = socket.gethostbyname(socket.gethostname()) #colocar o host 
+#HOST = socket.gethostbyname(socket.gethostname()) #colocar o host 
+HOST = "25.0.9.210"
 PORT = 8080 #colocar um port acima de 1000
 
 class graphicInterfaceService(object):
@@ -81,30 +82,26 @@ class graphicInterfaceService(object):
 
     def button_clicked(self):
         msg = self.tabelaValores.item(0, 0).text()
-        encrypted = encrypt(msg)
-        binary = binary_encode(encrypted)
-        signal = mlt3_line_encode(binary)
-
-        bin_str = ''.join([str(bit) for bit in binary])
-        signal_str = ','.join([str(bit) for bit in signal])
-
-        self.set_binary_msg(bin_str)
-        self.set_algorithm_msg(signal_str)
 
         svr = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         svr.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         svr.bind((HOST, PORT))
 
-
         svr.listen(5)
 
         con, adr = svr.accept() 
         msg = con.recv(1024)
+        a = list(range(len(msg)))
+        self.grafico.plot(a, msg, pen=None, symbol='o')
+        decrypted = mlt3_line_decode(msg)
+        self.set_binary_msg(decrypted)
+        binary = binary_decode(msg)
+        self.set_algorithm_msg(binary)
+        msg = decrypt(msg)
+
+        #Para testar. Setar na janela da interface quando estiver correto.
         print(msg.decode('utf-8'))
         con.close()
-
-        a = list(range(len(signal)))
-        self.grafico.plot(a, signal, pen=None, symbol='o')
 
 
     def set_binary_msg(self, value):

@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 import pyqtgraph as pg
 from encode import encrypt, binary_encode, mlt3_line_encode
 
-HOST = "172.21.32.1"  #colocar o host (e.g., localhost)
+HOST = "25.0.9.210"  #colocar o host (e.g., localhost)
 PORT = 8080  #colocar o port
 
 class graphicInterfaceService(object):
