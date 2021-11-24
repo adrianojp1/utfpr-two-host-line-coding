@@ -1,14 +1,17 @@
 import socket
 import sys
+import threading
 from PyQt5 import QtCore, QtWidgets
 import pyqtgraph as pg
 from encode import binary_decode, decrypt, encrypt, binary_encode, mlt3_line_decode, mlt3_line_encode
 
 #HOST = socket.gethostbyname(socket.gethostname()) #colocar o host 
-HOST = "25.0.9.210"
-PORT = 8080 #colocar um port acima de 1000
+HOST = "localhost"
+PORT = 3000 #colocar um port acima de 1000
 
 class graphicInterfaceService(object):
+    _buffer = []
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
@@ -62,9 +65,11 @@ class graphicInterfaceService(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        threading.Thread(target=graphicInterfaceService.listen).start()
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("Trabalho de comunicacao de dados - Equipe Minecraft", "Trabalho de comunicacao de dados - Equipe Minecraft"))
+        MainWindow.setWindowTitle(_translate("Trabalho de comunicacao de dados - Equipe Minecraft", "Receiver"))
         item = self.tabelaValores.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "Mensagem escrita"))
         item = self.tabelaValores.verticalHeaderItem(1)
@@ -81,28 +86,37 @@ class graphicInterfaceService(object):
         self.botaoEnvio.clicked.connect(self.button_clicked)
 
     def button_clicked(self):
-        msg = self.tabelaValores.item(0, 0).text()
+        msg = self.receive()
+        len_msg = len(msg)
+        if (len_msg > 0):
+            signal = [int(level) for level in msg.split(',')]
+            a = list(range(len(signal)))
+            self.grafico.plot(a, signal, pen=None, symbol='o')
 
-        svr = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        svr.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        svr.bind((HOST, PORT))
+            binary = mlt3_line_decode(signal)
+            encrypted = binary_decode(binary)
+            msg = decrypt(encrypted)
 
-        svr.listen(5)
+            signal_str = ','.join([str(bit) for bit in signal])
+            bin_str = ''.join([str(bit) for bit in binary])
 
-        con, adr = svr.accept() 
-        msg = con.recv(1024)
-        a = list(range(len(msg)))
-        self.grafico.plot(a, msg, pen=None, symbol='o')
-        decrypted = mlt3_line_decode(msg)
-        self.set_binary_msg(decrypted)
-        binary = binary_decode(msg)
-        self.set_algorithm_msg(binary)
-        msg = decrypt(msg)
+            self.set_algorithm_msg(signal_str)
+            self.set_binary_msg(bin_str)
+            self.set_text_msg(msg)
 
-        #Para testar. Setar na janela da interface quando estiver correto.
-        print(msg.decode('utf-8'))
-        con.close()
+    def receive(self):
+        if self.hasData():
+            return ''.join([x for x in list(self.getData())])
+        return []
 
+    def hasData(self):
+        return True if self._buffer else False
+
+    def getData(self):
+        return self._buffer.pop(0).decode("utf-8")
+
+    def set_text_msg(self, value):
+        self.tabelaValores.setItem(0, 0, QtWidgets.QTableWidgetItem(value))
 
     def set_binary_msg(self, value):
         self.tabelaValores.setItem(1, 0, QtWidgets.QTableWidgetItem(value))
@@ -110,6 +124,22 @@ class graphicInterfaceService(object):
     def set_algorithm_msg(self, value):
         self.tabelaValores.setItem(2, 0, QtWidgets.QTableWidgetItem(value))
  
+    @staticmethod
+    def listen():
+        while True:
+            svr = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            svr.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            svr.bind((HOST, PORT))
+
+            svr.listen(5)
+
+            con, adr = svr.accept() 
+            data = con.recv(10*1024*1024)
+            
+            graphicInterfaceService._buffer.append(data)
+            #Para testar. Setar na janela da interface quando estiver correto.
+            print(data.decode('utf-8'))
+            con.close()
 
 def start_svr():
     app = QtWidgets.QApplication(sys.argv)

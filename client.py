@@ -4,8 +4,8 @@ from PyQt5 import QtCore, QtWidgets
 import pyqtgraph as pg
 from encode import encrypt, binary_encode, mlt3_line_encode
 
-HOST = "25.0.9.210"  #colocar o host (e.g., localhost)
-PORT = 8080  #colocar o port
+HOST = "localhost"  #colocar o host (e.g., localhost)
+PORT = 3000  #colocar o port
 
 class graphicInterfaceService(object):
     def setupUi(self, MainWindow):
@@ -63,7 +63,7 @@ class graphicInterfaceService(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("Trabalho de comunicacao de dados - Equipe Minecraft", "Trabalho de comunicacao de dados - Equipe Minecraft"))
+        MainWindow.setWindowTitle(_translate("Trabalho de comunicacao de dados - Equipe Minecraft", "Sender"))
         item = self.tabelaValores.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "Mensagem escrita"))
         item = self.tabelaValores.verticalHeaderItem(1)
@@ -96,7 +96,8 @@ class graphicInterfaceService(object):
         cnt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         cnt.connect((HOST, PORT))
 
-        cnt.send(signal.encode('utf-8'))
+        print(signal_str)
+        cnt.send(bytes(signal_str.encode('utf-8')))
         cnt.close()
 
 
