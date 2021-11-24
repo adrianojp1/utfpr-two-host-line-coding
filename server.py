@@ -78,6 +78,7 @@ class graphicInterfaceService(object):
         if (len_msg > 0):
             signal = [int(level) for level in msg.split(',')]
             a = list(range(len(signal)))
+            self.grafico.clear()
             self.grafico.plot(a, signal, pen=None, symbol='o')
 
             binary = mlt3_line_decode(signal)
