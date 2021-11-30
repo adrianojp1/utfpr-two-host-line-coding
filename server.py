@@ -1,140 +1,41 @@
-import socket
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import sys
-import threading
-from PyQt5 import QtCore, QtWidgets
-import pyqtgraph as pg
+from PyQt5 import QtWidgets
 from encode import binary_decode, decrypt, mlt3_line_decode
 
-#HOST = socket.gethostbyname(socket.gethostname()) #colocar o host 
-HOST = "25.0.9.210"
-PORT = 3000 #colocar um port acima de 1000
+from gui import GraphicalUserInterface
+from communication import Communication as conn
 
-class graphicInterfaceService(object):
-    _buffer = []
 
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-        self.tabelaValores = QtWidgets.QTableWidget(self.centralwidget)
-        header = self.tabelaValores.horizontalHeader()
-        header.setResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setStretchLastSection(True)
-        self.tabelaValores.setGeometry(QtCore.QRect(40, 90, 711, 113))
-        self.tabelaValores.setMaximumSize(QtCore.QSize(711, 16777215))
-        self.tabelaValores.setObjectName("tabelaValores")
-        self.tabelaValores.setColumnCount(1)
-        self.tabelaValores.setRowCount(3)
-        item = QtWidgets.QTableWidgetItem()
-        self.tabelaValores.setVerticalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tabelaValores.setVerticalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tabelaValores.setVerticalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tabelaValores.setHorizontalHeaderItem(0, item)
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(310, 10, 200, 31))
-        self.label.setTextFormat(QtCore.Qt.MarkdownText)
-        self.label.setObjectName("label")
-        #grafico = QtWidgets.QGraphicsView(self.centralwidget)
-        self.grafico = pg.PlotWidget(self.centralwidget)
-        self.grafico.setGeometry(QtCore.QRect(40, 270, 711, 241))
-        self.grafico.setObjectName("grafico")
-        self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(370, 230, 50, 31))
-        self.label_3.setTextFormat(QtCore.Qt.MarkdownText)
-        self.label_3.setObjectName("label_3")
-        self.botaoEnvio = QtWidgets.QPushButton(self.centralwidget)
-        self.botaoEnvio.setGeometry(QtCore.QRect(670, 210, 80, 21))
-        self.botaoEnvio.setObjectName("botaoEnvio")
-        MainWindow.setCentralWidget(self.centralwidget)
+class Receiver(GraphicalUserInterface):
+    def __init__(self):
+        self.windows_title = "Receiver"
+        self.table_header_label = "Dados recebidos"
+        self.main_label = "Receiver - Equipe Minecraft"
+        self.button_label = "Ouvir"
+        self.buttom_action = self.receive_and_update
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        super().__init__()
 
-        threading.Thread(target=graphicInterfaceService.listen).start()
+        conn.start()
 
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("Trabalho de comunicacao de dados - Equipe Minecraft", "Receiver"))
-        item = self.tabelaValores.verticalHeaderItem(0)
-        item.setText(_translate("MainWindow", "Mensagem escrita"))
-        item = self.tabelaValores.verticalHeaderItem(1)
-        item.setText(_translate("MainWindow", "Mensagem binário"))
-        item = self.tabelaValores.verticalHeaderItem(2)
-        item.setText(_translate("MainWindow", "Mensagem algoritmo"))
-        item = self.tabelaValores.horizontalHeaderItem(0)
-        item.setText(_translate("MainWindow", "Dados recebidos"))
-        self.label.setText(_translate("MainWindow", "Receiver - Equipe Minecraft"))
-        self.label_3.setText(_translate("MainWindow", "Gráfico"))
-        self.botaoEnvio.setText(_translate("MainWindow", "Ouvir"))
-        self.botaoEnvio.clicked.connect(self.button_clicked)
-
-    def button_clicked(self):
-        msg = self.receive()
-        len_msg = len(msg)
-        if (len_msg > 0):
-            signal = [int(level) for level in msg.split(',')]
-            a = list(range(len(signal)))
-            self.grafico.clear()
-            self.grafico.plot(a, signal, pen=None, symbol='o')
-
+    def receive_and_update(self):
+        data = conn.receive()
+        if (data):
+            signal = data
             binary = mlt3_line_decode(signal)
             encrypted = binary_decode(binary)
             msg = decrypt(encrypted)
 
-            signal_str = ','.join([str(bit) for bit in signal])
-            bin_str = ''.join([str(bit) for bit in binary])
+            self.update_gui(msg, binary, signal)
 
-            self.set_algorithm_msg(signal_str)
-            self.set_binary_msg(bin_str)
-            self.set_text_msg(msg)
 
-    def receive(self):
-        if self.hasData():
-            return ''.join([x for x in list(self.getData())])
-        return []
-
-    def hasData(self):
-        return True if self._buffer else False
-
-    def getData(self):
-        return self._buffer.pop(0).decode("utf-8")
-
-    def set_text_msg(self, value):
-        self.tabelaValores.setItem(0, 0, QtWidgets.QTableWidgetItem(value))
-
-    def set_binary_msg(self, value):
-        self.tabelaValores.setItem(1, 0, QtWidgets.QTableWidgetItem(value))
-
-    def set_algorithm_msg(self, value):
-        self.tabelaValores.setItem(2, 0, QtWidgets.QTableWidgetItem(value))
- 
-    @staticmethod
-    def listen():
-        while True:
-            svr = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            svr.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            svr.bind((HOST, PORT))
-
-            svr.listen(5)
-
-            con, adr = svr.accept() 
-            data = con.recv(10*1024*1024)
-            
-            graphicInterfaceService._buffer.append(data)
-            #Para testar. Setar na janela da interface quando estiver correto.
-            print(data.decode('utf-8'))
-            con.close()
-
-def start_svr():
+def main():
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = graphicInterfaceService()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    Receiver()
     sys.exit(app.exec_())
 
-start_svr()
+
+if __name__ == '__main__':
+    main()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Collection, Iterator, List
+from typing import Collection, Iterator
 from itertools import cycle
 
 
@@ -28,24 +28,21 @@ def decrypt(encrypted: str) -> str:
     return msg
 
 
-def binary_encode(data: str) -> List[int]:
-    binary = []
+def binary_encode(data: str) -> str:
+    binary = ''
 
     for char in data:
         unicode = ord(char)
-        char_bin = format(unicode, '08b')
-        for bit in char_bin:
-            binary.append(int(bit))
+        binary += format(unicode, '08b')
 
     return binary
 
 
-def binary_decode(binary: List[int]) -> str:
+def binary_decode(binary: str) -> str:
     data = ''
 
-    for char_bin_ints in split_chunks(binary, 8):
-        char_bin_str = ''.join([str(bit) for bit in char_bin_ints])
-        unicode = int(char_bin_str, 2)
+    for char_bin in split_chunks(binary, 8):
+        unicode = int(char_bin, 2)
         char = chr(unicode)
         data += char
 
@@ -53,25 +50,26 @@ def binary_decode(binary: List[int]) -> str:
 
 
 # https://en.wikipedia.org/wiki/MLT-3_encoding
-def mlt3_line_encode(data: List[int]) -> List[int]:
-    signal_levels = cycle([-1, 0, 1, 0])
-    signal_level = 0
-    encoded = []
+def mlt3_line_encode(data: str) -> str:
+    signal_levels = cycle(['-1', '0', '1', '0'])
+    signal_level = '0'
+    encoded = ''
 
     for bit in data:
-        signal_level = next(signal_levels) if bit == 1 else signal_level
-        encoded.append(signal_level)
+        signal_level = next(signal_levels) if bit == '1' else signal_level
+        encoded += ',' + signal_level
 
-    return encoded
+    return encoded[1:]
 
 
-def mlt3_line_decode(signal: List[int]) -> List[int]:
-    previous = 0 if signal[0] == 0 else 1
-    data = [previous]
+def mlt3_line_decode(signal_src: str) -> str:
+    signal = signal_src.split(',')
+    previous = '0' if signal[0] == '0' else '1'
+    data = previous
 
     for signal_level in signal[1:]:
-        bit = 0 if signal_level == previous else 1
-        data.append(bit)
+        bit = '0' if signal_level == previous else '1'
+        data += bit
         previous = signal_level
 
     return data
@@ -100,3 +98,7 @@ def test_encodings():
     print(f'Out Message: {out_msg}\n')
 
     assert in_msg == out_msg, 'In and out messages are different!'
+
+
+if __name__ == '__main__':
+    test_encodings()
