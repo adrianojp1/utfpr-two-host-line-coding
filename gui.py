@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
-import pyqtgraph as pg
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavToolbar
 
 
 class GraphicalUserInterface(QtWidgets.QMainWindow):
@@ -8,11 +10,9 @@ class GraphicalUserInterface(QtWidgets.QMainWindow):
 
         self.setObjectName("MainWindow")
         self.resize(800, 600)
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.centralwidget.setObjectName("centralwidget")
-        self.tabelaValores = QtWidgets.QTableWidget(self.centralwidget)
+        
+        self.tabelaValores = QtWidgets.QTableWidget()
         header = self.tabelaValores.horizontalHeader()
-        header.setResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         header.setStretchLastSection(True)
         self.tabelaValores.setGeometry(QtCore.QRect(40, 90, 711, 113))
         self.tabelaValores.setMaximumSize(QtCore.QSize(711, 16777215))
@@ -27,21 +27,42 @@ class GraphicalUserInterface(QtWidgets.QMainWindow):
         self.tabelaValores.setVerticalHeaderItem(2, item)
         item = QtWidgets.QTableWidgetItem()
         self.tabelaValores.setHorizontalHeaderItem(0, item)
-        self.label_1 = QtWidgets.QLabel(self.centralwidget)
+
+        self.label_1 = QtWidgets.QLabel()
         self.label_1.setGeometry(QtCore.QRect(310, 10, 200, 31))
         self.label_1.setTextFormat(QtCore.Qt.MarkdownText)
-        self.label_1.setObjectName("label")
-        self.grafico = pg.PlotWidget(self.centralwidget)
-        self.grafico.setGeometry(QtCore.QRect(40, 270, 711, 241))
-        self.grafico.setObjectName("grafico")
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
+        self.label_1.setObjectName("label_1")
+
+        self.label_2 = QtWidgets.QLabel()
         self.label_2.setGeometry(QtCore.QRect(370, 230, 50, 31))
         self.label_2.setTextFormat(QtCore.Qt.MarkdownText)
         self.label_2.setObjectName("label_3")
-        self.comm_buttom = QtWidgets.QPushButton(self.centralwidget)
-        self.comm_buttom.setGeometry(QtCore.QRect(670, 210, 80, 21))
-        self.comm_buttom.setObjectName("botaoEnvio")
-        self.setCentralWidget(self.centralwidget)
+
+        self.conn_buttom = QtWidgets.QPushButton()
+        self.conn_buttom.setGeometry(QtCore.QRect(670, 210, 80, 21))
+        self.conn_buttom.setObjectName("botaoEnvio")
+
+        xpixels = 600
+        ypixels = 150
+        dpi = 72.
+        xinch = xpixels / dpi
+        yinch = ypixels / dpi
+        self.figure = Figure(figsize=(xinch, yinch))
+        self.figure.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
+        self.canvas = FigureCanvas(self.figure)
+        self.addToolBar(NavToolbar(self.canvas, self))
+        self.ax = self.figure.add_subplot(111)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.label_1)
+        layout.addWidget(self.tabelaValores)
+        layout.addWidget(self.conn_buttom)
+        layout.addWidget(self.label_2)
+        layout.addWidget(self.canvas)
+        centralWidget = QtWidgets.QWidget(self)
+        centralWidget.setLayout(layout)
+        
+        self.setCentralWidget(centralWidget)
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -62,8 +83,8 @@ class GraphicalUserInterface(QtWidgets.QMainWindow):
         item.setText(_translate("MainWindow", self.table_header_label))
         self.label_1.setText(_translate("MainWindow", self.main_label))
         self.label_2.setText(_translate("MainWindow", "Gráfico"))
-        self.comm_buttom.setText(_translate("MainWindow", self.button_label))
-        self.comm_buttom.clicked.connect(self.buttom_action)
+        self.conn_buttom.setText(_translate("MainWindow", self.button_label))
+        self.conn_buttom.clicked.connect(self.buttom_action)
 
     def update_gui(self, msg, binary, signal):
         self.update_msg(msg)
@@ -80,7 +101,12 @@ class GraphicalUserInterface(QtWidgets.QMainWindow):
     def update_signal(self, signal):
         self.tabelaValores.setItem(2, 0, QtWidgets.QTableWidgetItem(signal))
 
-        signal_levels = [int(level) for level in (signal.split(','))]
-        a = list(range(len(signal_levels)))
-        self.grafico.clear()
-        self.grafico.plot(a, signal_levels, pen=None, symbol='o')
+        self.ax.clear()
+        if (signal):
+            signal_levels = [int(level) for level in (signal.split(','))]
+            self._plot(range(0, len(signal_levels)), signal_levels)
+        self.canvas.draw()
+
+    def _plot(self, x, y):
+        self.ax.plot(x, y, drawstyle='steps-post')
+        self.ax.set_xticks([0, max(x)])
