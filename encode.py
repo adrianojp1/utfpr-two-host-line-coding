@@ -51,7 +51,7 @@ def binary_decode(binary: str) -> str:
 
 # https://en.wikipedia.org/wiki/MLT-3_encoding
 def mlt3_line_encode(data: str) -> str:
-    signal_levels = cycle(['-1', '0', '1', '0'])
+    signal_levels = cycle(['1', '0', '-1', '0'])
     signal_level = '0'
     encoded = ''
 

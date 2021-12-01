@@ -4,7 +4,7 @@ import threading
 
 class Communication(object):
     _buffer = []
-    HOST = "localhost"
+    HOST = "25.67.72.254"
     PORT = 3000
 
     @staticmethod
