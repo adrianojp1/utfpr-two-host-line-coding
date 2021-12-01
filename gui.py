@@ -9,13 +9,13 @@ class GraphicalUserInterface(QtWidgets.QMainWindow):
         super().__init__()
 
         self.setObjectName("MainWindow")
-        self.resize(800, 600)
+        self.resize(800, 500)
         
         self.tabelaValores = QtWidgets.QTableWidget()
         header = self.tabelaValores.horizontalHeader()
         header.setStretchLastSection(True)
         self.tabelaValores.setGeometry(QtCore.QRect(40, 90, 711, 113))
-        self.tabelaValores.setMaximumSize(QtCore.QSize(711, 16777215))
+        self.tabelaValores.setMaximumHeight(113)
         self.tabelaValores.setObjectName("tabelaValores")
         self.tabelaValores.setColumnCount(1)
         self.tabelaValores.setRowCount(3)
@@ -104,9 +104,12 @@ class GraphicalUserInterface(QtWidgets.QMainWindow):
         self.ax.clear()
         if (signal):
             signal_levels = [int(level) for level in (signal.split(','))]
+            signal_levels.append(signal_levels[-1])
             self._plot(range(0, len(signal_levels)), signal_levels)
         self.canvas.draw()
 
     def _plot(self, x, y):
         self.ax.plot(x, y, drawstyle='steps-post')
-        self.ax.set_xticks([0, max(x)])
+        self.ax.set_xticks(x)
+        self.ax.set_yticks(range(-2, 3))
+        self.ax.grid()
